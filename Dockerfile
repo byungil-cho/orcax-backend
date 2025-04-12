@@ -1,22 +1,20 @@
-# Dockerfile
-
-# 1. Node.js 이미지 사용
+# 기본 Node.js 이미지 사용
 FROM node:18
 
-# 2. 앱 디렉터리 생성
+# 작업 디렉토리 설정
 WORKDIR /app
 
-# 3. package.json과 package-lock.json 복사
+# 종속성 복사
 COPY package*.json ./
 
-# 4. 의존성 설치
+# 의존성 설치
 RUN npm install
 
-# 5. 앱 소스 복사
+# 앱 파일 복사
 COPY . .
 
-# 6. 포트 개방
+# 포트 열기
 EXPOSE 3000
 
-# 7. 앱 시작
+# 앱 시작
 CMD ["node", "server.js"]
