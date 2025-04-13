@@ -1,33 +1,62 @@
-// sendNft.js
-import { Connection, PublicKey, Keypair, clusterApiUrl } from "@solana/web3.js";
-import { Metaplex, keypairIdentity, bundlrStorage } from "@metaplex-foundation/js";
-import bs58 from "bs58";
-import dotenv from "dotenv";
+const { ethers } = require("ethers");
+const abi = require("./abi/erc1155.json");
+require("dotenv").config();
 
-dotenv.config();
+// 환경 변수 가져오기
+const PRIVATE_KEY = process.env.PRIVATE_KEY;
+const CONTRACT_ADDRESS = process.env.CONTRACT_ADDRESS;
+const RPC_URL = process.env.RPC_URL;
 
-const PRIVATE_KEY = bs58.decode(process.env.SOLANA_PRIVATE_KEY);
-const wallet = Keypair.fromSecretKey(PRIVATE_KEY);
+// 전송 실행 함수
+async function sendNft(wallet, tokenId, qty) {
+  try {
+    if (!wallet || !tokenId || !qty) {
+      throw new Error("❌ 지갑 주소, 토큰 ID, 수량을 모두 입력해야 합니다.");
+    }
 
-const connection = new Connection(clusterApiUrl("mainnet-beta"), "confirmed");
+    // 프로바이더 및 지갑 설정
+    const provider = new ethers.JsonRpcProvider(RPC_URL);
+    const walletSigner = new ethers.Wallet(PRIVATE_KEY, provider);
 
-const metaplex = Metaplex.make(connection)
-  .use(keypairIdentity(wallet))
-  .use(bundlrStorage());
+    // 컨트랙트 인스턴스
+    const nftContract = new ethers.Contract(CONTRACT_ADDRESS, abi, walletSigner);
 
-export async function sendNft(recipientAddress, mintAddress) {
-  const recipient = new PublicKey(recipientAddress);
-  const mint = new PublicKey(mintAddress);
+    const from = await walletSigner.getAddress();
 
-  const { response } = await metaplex.nfts().send({
-    mintAddress: mint,
-    toOwner: recipient,
-  });
+    console.log(`🚀 ${from} → ${wallet} 로 NFT 전송 시작...`);
+    const tx = await nftContract.safeTransferFrom(
+      from,
+      wallet,
+      tokenId,
+      qty,
+      "0x"
+    );
 
-  return response.signature;
+    console.log("📦 트랜잭션 전송됨:", tx.hash);
+    await tx.wait();
+    console.log("✅ NFT 전송 완료!");
+
+    return { success: true, hash: tx.hash };
+
+  } catch (error) {
+    console.error("❌ 전송 중 오류 발생:", error.message);
+    return { success: false, error: error.message };
+  }
 }
 
-app.listen(PORT, () => {
-  console.log(`🟢 NFT 서버 실행됨: http://localhost:${PORT}`);
+// API 경로에서 사용하기 위한 express 핸들러
+const express = require("express");
+const router = express.Router();
+
+router.post("/api/send-nft", async (req, res) => {
+  const { wallet, tokenId, qty } = req.body;
+  const result = await sendNft(wallet, tokenId, qty);
+
+  if (result.success) {
+    res.json({ message: "NFT 전송 완료", txHash: result.hash });
+  } else {
+    res.status(500).json({ error: result.error });
+  }
 });
 
+module.exports = router;
