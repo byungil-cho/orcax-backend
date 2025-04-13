@@ -1,66 +1,67 @@
 // sendNft.js
+import express from 'express';
+import cors from 'cors';
+import bodyParser from 'body-parser';
+import { Connection, PublicKey, clusterApiUrl } from '@solana/web3.js';
+import { Metaplex, keypairIdentity, bundlrStorage } from '@metaplex-foundation/js';
+import dotenv from 'dotenv';
+import bs58 from 'bs58';
 
-const { ethers } = require("ethers");
-require("dotenv").config();
+dotenv.config();
 
-const PRIVATE_KEY = process.env.PRIVATE_KEY;
-const RPC = process.env.POLYGON_RPC;
-const CONTRACT_ADDRESS = process.env.NFT_CONTRACT;
+const app = express();
+const PORT = process.env.PORT || 3000;
 
-const abi = [
-  "function safeTransferFrom(address from, address to, uint256 id, uint256 amount, bytes data) external",
-  "function balanceOf(address account, uint256 id) view returns (uint256)"
-];
+app.use(cors());
+app.use(bodyParser.json());
 
-const provider = new ethers.JsonRpcProvider(RPC);
-const wallet = new ethers.Wallet(PRIVATE_KEY, provider);
-const nftContract = new ethers.Contract(CONTRACT_ADDRESS, abi, wallet);
+// 🔑 지갑 키 로딩
+const PRIVATE_KEY = process.env.SOLANA_PRIVATE_KEY;
+const keypair = bs58.decode(PRIVATE_KEY);
+const wallet = web3.Keypair.fromSecretKey(keypair);
 
-async function sendNFT({ to, tokenId, amount = 1 }) {
-  try {
-    if (!to || !tokenId) throw new Error("to 주소와 tokenId는 필수입니다");
+// 🔌 Solana 연결
+const connection = new Connection(clusterApiUrl('mainnet-beta'), 'confirmed');
+const metaplex = Metaplex.make(connection)
+  .use(keypairIdentity(wallet))
+  .use(bundlrStorage());
 
-    const from = await wallet.getAddress();
-    console.log(`🚚 NFT 전송 시도: From ${from} → To ${to} (ID: ${tokenId}, 수량: ${amount})`);
+// 🎯 NFT 전송 함수
+async function sendNft(recipientAddress, mintAddress) {
+  const recipient = new PublicKey(recipientAddress);
+  const mint = new PublicKey(mintAddress);
 
-    const balance = await nftContract.balanceOf(from, tokenId);
-    if (balance < amount) {
-      throw new Error(`보유 수량 부족: 보유 ${balance}, 요청 ${amount}`);
-    }
+  const { response } = await metaplex.nfts().send({
+    mintAddress: mint,
+    toOwner: recipient,
+  });
 
-    const tx = await nftContract.safeTransferFrom(
-      from,
-      to,
-      tokenId,
-      amount,
-      "0x"
-    );
+  return response.signature;
+}
 
-    console.log(`📦 트랜잭션 전송 중... TX: ${tx.hash}`);
-    await tx.wait();
-    console.log("✅ 전송 성공!");
+// 📡 API 라우터
+app.post('/api/send-nft', async (req, res) => {
+  const { recipient, mintAddress } = req.body;
 
-    return {
-      success: true,
-      message: "NFT 전송 완료",
-      txHash: tx.hash,
-    };
-  } catch (err) {
-    console.error("❌ 전송 실패:", err.message);
-    return {
-      success: false,
-      message: err.message,
-    };
+  if (!recipient || !mintAddress) {
+    return res.status(400).json({ message: 'recipient와 mintAddress는 필수입니다.' });
   }
-}
 
-// 직접 실행할 때만 테스트 실행
-if (require.main === module) {
-  sendNFT({
-    to: "0xDc579E3d2aA71Ce354719f45A3910b7b7B899B8B",
-    tokenId: 2,
-    amount: 1,
-  }).then(console.log);
-}
+  try {
+    const tx = await sendNft(recipient, mintAddress);
+    res.status(200).json({ message: 'NFT 전송 성공!', tx });
+  } catch (err) {
+    console.error('전송 실패:', err);
+    res.status(500).json({ message: 'NFT 전송 실패', error: err.message });
+  }
+});
 
-module.exports = sendNFT;
+// 🧪 서버 확인 라우터
+app.get('/', (req, res) => {
+  res.send('OrcaX 실전 NFT API 서버 가동 중 🚀');
+});
+
+app.listen(PORT, () => {
+  console.log(`🟢 NFT 서버 실행됨: http://localhost:${PORT}`);
+});
+
