@@ -1,24 +1,20 @@
 // server.js
+
 import express from "express";
-import cors from "cors";
-import bodyParser from "body-parser";
 import dotenv from "dotenv";
-import nftRoutes from "./routes/nft.js";
+import cors from "cors";
+import nftRoutes from "./routes/nft.js"; // ✅ 이 줄 추가
 
 dotenv.config();
-
 const app = express();
-const PORT = process.env.PORT || 3000;
 
 app.use(cors());
-app.use(bodyParser.json());
+app.use(express.json());
 
+// ✅ API 경로 등록
 app.use("/api", nftRoutes);
 
-app.get("/", (req, res) => {
-  res.send("OrcaX NFT API 서버 가동 중! 🐳");
-});
-
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`✅ 서버 가동: http://localhost:${PORT}`);
+  console.log(`🚀 OrcaX NFT 서버 실행 중: http://localhost:${PORT}`);
 });
