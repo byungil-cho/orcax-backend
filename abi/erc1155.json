@@ -1,29 +1,35 @@
-
-const { ethers } = require("ethers");
-require("dotenv").config();
-const ABI = require("./abi/erc1155.json"); // ABI 파일 따로 만들어서 여기에 넣자
-
-const provider = new ethers.providers.JsonRpcProvider(process.env.RPC_URL);
-const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
-const nftContract = new ethers.Contract(
-  process.env.NFT_CONTRACT_ADDRESS,
-  ABI,
-  wallet
-);
-
-async function sendNFT(to, tokenId) {
-  try {
-    const tx = await nftContract.safeTransferFrom(
-      process.env.OWNER_ADDRESS,
-      to,
-      tokenId,
-      1,
-      "0x"
-    );
-    console.log("NFT 전송 성공:", tx.hash);
-  } catch (err) {
-    console.error("NFT 전송 실패:", err.message);
+[
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "from",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "to",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "id",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      },
+      {
+        "internalType": "bytes",
+        "name": "data",
+        "type": "bytes"
+      }
+    ],
+    "name": "safeTransferFrom",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
   }
-}
-
-sendNFT("받는사람주소", 2); // 실제 테스트할 지갑 주소, NFT ID 입력
+]
