@@ -1,36 +1,38 @@
 const express = require('express');
-const fs = require('fs');
-const path = require('path');
+const bodyParser = require('body-parser');
+const cors = require('cors');
+
 const app = express();
 const PORT = 3000;
 
-app.use(express.json());
-app.use(express.static('public'));
+app.use(cors());
+app.use(bodyParser.json());
+app.use(express.static('public')); // 정적 파일 서빙할 경우
 
-// 주문 접수 + 문자 발송 트리거 처리
-app.post('/api/sms/order-notice', (req, res) => {
-  const order = req.body;
-  console.log('📥 주문 수신됨:', order);
+// 문자 보내기 API
+app.post('/api/sms/send', async (req, res) => {
+  try {
+    const { to, message } = req.body;
 
-  const orderLine = JSON.stringify({
-    ...order,
-    timestamp: new Date().toISOString()
-  }) + ',\n';
+    console.log('요청 받은 번호:', to);
+    console.log('보낼 메시지:', message);
 
-  fs.appendFile(path.join(__dirname, 'orders.json'), orderLine, (err) => {
-    if (err) {
-      console.error('❌ 주문 저장 실패:', err);
-      return res.status(500).json({ success: false, message: '주문 저장 실패' });
-    }
+    // 여기에 실제 문자 보내는 API 호출 로직 들어감 (예: coolsms, nurigo 등)
+    // 지금은 테스트니까 더미 응답
 
-    // ✉️ 문자 발송 로직 자리 (알리고 연동 여기 넣으면 됨)
-    console.log(`📨 문자 발송 요청 준비 완료 (예상 수신자: ${order.phone})`);
-
-    res.json({ success: true, message: '주문 저장 및 문자 발송 트리거 완료' });
-  });
+    res.json({
+      success: true,
+      message: '문자 전송 성공!',
+      data: { to, message }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
 });
 
-// 서버 시작
 app.listen(PORT, () => {
-  console.log(`🚀 OrcaX 백엔드 작동 중: http://localhost:${PORT}`);
+  console.log(`서버 실행 중: http://localhost:${PORT}`);
 });
