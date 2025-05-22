@@ -1,14 +1,19 @@
-const express = require('express');
-const app = express();
-const port = process.env.PORT || 3080;
+const express = require("express");
+const mongoose = require("mongoose");
+const cors = require("cors");
+require("dotenv").config();
 
+const app = express();
+app.use(cors());
 app.use(express.json());
 
-app.post('/api/notify', (req, res) => {
-  console.log('✅ POST 요청 도착:', req.body);
-  res.status(200).json({ message: '요청 성공적으로 수신됨!' });
-});
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => console.log("MongoDB 연결 성공"))
+  .catch((err) => console.error("MongoDB 연결 실패:", err));
 
-app.listen(port, () => {
-  console.log(`🚀 서버 실행 중: http://localhost:${port}`);
-});
+// 라우터 등록
+const orderRoute = require("./routes/order");
+app.use("/order", orderRoute);
+
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`서버 실행 중: ${PORT}`));
