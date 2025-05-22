@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>OrcaX 관리자 주문 페이지</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #111; color: #00e0c7; padding: 2rem; }
+    table { width: 100%; border-collapse: collapse; margin-top: 2rem; }
+    th, td { border: 1px solid #00e0c7; padding: 0.5rem; text-align: center; }
+    th { background: #222; }
+    td { background: #000; }
+    .hidden { display: none; }
+    button { background: #ff4444; color: white; border: none; padding: 5px 10px; border-radius: 6px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h2>🔐 관리자 전용 - OrcaX 주문 내역</h2>
+
+  <div id="auth">
+    <p>비밀번호를 입력하세요:</p>
+    <input type="password" id="adminPass" placeholder="관리자 비밀번호" />
+    <button onclick="checkPassword()">확인</button>
+  </div>
+
+  <div id="adminPanel" class="hidden">
+    <table>
+      <thead>
+        <tr>
+          <th>이름</th>
+          <th>전화번호</th>
+          <th>지갑주소</th>
+          <th>수량</th>
+          <th>NFT</th>
+          <th>일시</th>
+          <th>삭제</th>
+        </tr>
+      </thead>
+      <tbody id="orderTable"></tbody>
+    </table>
+  </div>
+
+  <script>
+    const API_LIST = "https://orcax-backend-rdlq.onrender.com/order/list-json";
+    const API_DELETE = "https://orcax-backend-rdlq.onrender.com/order/delete";
+
+    function checkPassword() {
+      const input = document.getElementById("adminPass").value;
+      if (input === "2025") {
+        document.getElementById("auth").classList.add("hidden");
+        document.getElementById("adminPanel").classList.remove("hidden");
+        loadOrders();
+      } else {
+        alert("❌ 비밀번호가 틀렸습니다.");
+      }
+    }
+
+    async function loadOrders() {
+      const res = await fetch(API_LIST);
+      const orders = await res.json();
+      const table = document.getElementById("orderTable");
+      table.innerHTML = "";
+
+      orders.forEach(o => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${o.name}</td>
+          <td>${o.phone}</td>
+          <td>${o.wallet}</td>
+          <td>${o.quantity}</td>
+          <td>${o.nft}</td>
+          <td>${new Date(o.createdAt).toLocaleString()}</td>
+          <td><button onclick="deleteOrder('${o._id}')">삭제</button></td>
+        `;
+        table.appendChild(tr);
+      });
+    }
+
+    async function deleteOrder(id) {
+      if (!confirm("정말 삭제하시겠습니까?")) return;
+      const res = await fetch(API_DELETE, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id })
+      });
+      const result = await res.json();
+      if (result.success) {
+        alert("✅ 삭제 완료");
+        loadOrders();
+      } else {
+        alert("❌ 삭제 실패");
+      }
+    }
+  </script>
+</body>
+</html>
