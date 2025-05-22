@@ -1,0 +1,95 @@
+body {
+  background-color: #111;
+  color: #00e0c7;
+  font-family: Arial, sans-serif;
+  text-align: center;
+  margin: 0;
+  padding: 0;
+}
+
+.coupon-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 2rem;
+  margin-top: 2rem;
+}
+
+.coupon-card {
+  background: #222;
+  border-radius: 1rem;
+  padding: 1rem;
+  width: 300px;
+  box-shadow: 0 0 20px rgba(0,255,255,0.2);
+}
+
+.coupon-card img {
+  width: 100%;
+  border-radius: 1rem;
+  cursor: pointer;
+}
+
+.buy-btn {
+  margin-top: 1rem;
+  padding: 0.5rem 1rem;
+  background: linear-gradient(135deg,#00ffc3,#00b2ff);
+  color: #111;
+  border: none;
+  border-radius: 2rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.modal,
+.desc-modal {
+  display: none;
+  position: fixed;
+  z-index: 999;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.8);
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-content,
+.desc-modal-content {
+  background: #1c1c1c;
+  color: #00e0c7;
+  padding: 2rem;
+  border-radius: 1rem;
+  width: 90%;
+  max-width: 400px;
+  text-align: left;
+}
+
+.close-btn {
+  float: right;
+  color: #ff6666;
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
+label {
+  display: block;
+  margin: 1rem 0 0.5rem;
+}
+
+input {
+  width: 100%;
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  border: 1px solid #00ffc3;
+  background: #111;
+  color: white;
+}
+
+.summary {
+  margin-top: 1rem;
+  background: #222;
+  padding: 1rem;
+  border-radius: 1rem;
+}
